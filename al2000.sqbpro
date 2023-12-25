@@ -1,0 +1,144 @@
+<?xml version="1.0" encoding="UTF-8"?><sqlb_project><db path="/Users/alexisetheve/Documents/GitHub/PROJET_INTEGRATEUR/al2000.db" readonly="0" foreign_keys="1" case_sensitive_like="0" temp_store="0" wal_autocheckpoint="1000" synchronous="2"/><attached/><window><main_tabs open="structure browser pragmas query" current="3"/></window><tab_structure><column_width id="0" width="300"/><column_width id="1" width="0"/><column_width id="2" width="100"/><column_width id="3" width="1285"/><column_width id="4" width="0"/><expanded_item id="0" parent="1"/><expanded_item id="1" parent="1"/><expanded_item id="2" parent="1"/><expanded_item id="3" parent="1"/></tab_structure><tab_browse><current_table name="4,7:mainActeurs"/><default_encoding codec=""/><browse_table_settings><table schema="main" name="Acteurs" show_row_id="0" encoding="" plot_x_axis="" unlock_view_pk="_rowid_"><sort/><column_widths><column index="1" value="40"/><column index="2" value="32"/><column index="3" value="48"/><column index="4" value="90"/><column index="5" value="65"/></column_widths><filter_values/><conditional_formats/><row_id_formats/><display_formats/><hidden_columns/><plot_y_axes/><global_filter/></table></browse_table_settings></tab_browse><tab_sql><sql name="SQL 1">drop table if exists ClientAbonne;
+drop table if exists ClientNonAbo;
+drop table if exists EnfantAbonne;
+drop table if exists Films;
+drop table if exists Favoris;
+drop table if exists Location;
+drop table if exists FilmsBluray;
+drop table if exists Acteurs;
+drop table if exists Poducteurs;
+drop table if exists CarteAbonne;
+drop table if exists Categories;
+drop view if exists Historique;
+
+
+CREATE TABLE CarteAbonne(
+    CarteId INTEGER PRIMARY KEY AUTOINCREMENT,
+    Solde INTEGER NOT NULL
+);
+
+
+CREATE TABLE ClientAbonne (
+    ClientId  INTEGER  PRIMARY KEY AUTOINCREMENT,
+    Nom VARCHAR(255),
+    Prenom VARCHAR(255), 
+    DateNaissance DATE,
+    Email VARCHAR(255) NOT NULL UNIQUE, 
+    PassW VARCHAR(255),
+    Adresse VARCHAR(255),
+    CarteBleu INTEGER
+    
+);
+
+
+CREATE TABLE ClientNonAbo(
+	ClientNonAboId INT NOT NULL PRIMARY KEY,
+	CarteBleu INT NOT NULL
+);
+
+CREATE TABLE EnfantAbonne (
+    CarteId_p INTEGER , 
+    CarteId_e INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    Age INT NOT NULL,
+    FOREIGN KEY (CarteId_p) REFERENCES CarteAbonne(CarteId)
+);
+
+
+CREATE TABLE Films(
+    FilmId INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    Titre VARCHAR(255),
+    Descr VARCHAR(255),
+    Annee_sortie INT,
+    Img VARCHAR(255),
+    AgeMin INT,
+    Duree INT
+);
+
+
+
+
+CREATE TABLE Favoris(
+    CarteId INT ,
+    FilmId INT,
+    Solde INT,
+    FOREIGN KEY (CarteId) REFERENCES CarteAbonne(CarteId),
+    FOREIGN KEY (FilmId) REFERENCES Films(FilmId),
+	PRIMARY KEY (CarteId, FilmId)
+);
+
+
+CREATE TABLE Location(
+	LocId INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+	Carte STRING,
+	FilmId INT ,
+	Date_loc TIMESTAMP,
+	Prix DECIMAL,
+	FOREIGN KEY (FilmId)REFERENCES Films(FilmId)
+);
+
+
+CREATE TABLE FilmsBluray(
+	BlurayId INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+	FilmId INT, 
+    Etat VARCHAR(255),
+    Loc INTEGER,
+	FOREIGN KEY (FilmId) REFERENCES Films(FilmId)
+);
+
+
+CREATE TABLE Acteurs(
+	FilmId INT ,
+	Nom VARCHAR(255),
+	Prenom VARCHAR(255),
+	Date_naissance VARCHAR(255),
+	Nationalite VARCHAR(255),
+	FOREIGN KEY (FilmId) REFERENCES Films(FilmId)
+);
+
+
+CREATE TABLE Poducteurs(
+	FilmId INT ,
+	Nom VARCHAR(255),
+	Prenom VARCHAR(255),
+	Date_naissance VARCHAR(255),
+	Nationalite VARCHAR(255),
+	PRIMARY KEY (Nom,Prenom),
+	FOREIGN KEY (FilmId) REFERENCES Films(FilmId)
+);
+
+CREATE TABLE Categories(
+	FilmId INT ,
+    Categories VARCHAR(255),
+	FOREIGN KEY (FilmId) REFERENCES Films(FilmId)
+);
+
+-- #TODO Historique vu
+
+CREATE VIEW Historique AS
+    SELECT Titre , Carte, Date_loc
+    FROM Location
+    GROUP BY Carte 
+    ORDER BY Date_loc DESC 
+    LIMIT 20
+;
+
+CREATE TRIGGER limit_locations_per_client
+BEFORE INSERT ON Location
+FOR EACH ROW
+WHEN
+    (SELECT COUNT(*) FROM Location WHERE Carte = NEW.Carte) &gt;= 5
+BEGIN
+    SELECT RAISE(ABORT, 'Nombre maximal de locations atteint pour ce client');
+END;
+
+CREATE TRIGGER abonnement
+BEFORE INSERT ON CarteAbonne
+FOR EACH ROW
+WHEN(
+    SELECT Solde 
+    FROM CarteAbonne
+    WHERE CarteId=NEW.CarteId
+)&lt;15
+BEGIN
+    SELECT RAISE(ABORT, 'le solde minimum de la carte abonné à la création est 15 euros');
+END;</sql><current_tab id="0"/></tab_sql></sqlb_project>
